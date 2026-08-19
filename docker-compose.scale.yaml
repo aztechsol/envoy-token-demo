@@ -1,0 +1,5 @@
+# Compose v2.24.4+ supports !reset. This overlay removes the fixed host ports
+# from Envoy so several replicas can run behind Compose's internal DNS.
+services:
+  envoy:
+    ports: !reset []

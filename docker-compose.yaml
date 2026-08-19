@@ -1,0 +1,42 @@
+services:
+  xds:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.xds
+    environment:
+      CONFIG_PATH: /config/tokens.yaml
+    volumes:
+      # Mount the directory so fsnotify also observes editor-style atomic saves.
+      - ./config:/config:ro
+    ports:
+      - "18000:18000"
+      - "8082:8082"
+    init: true
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8081:8081"
+    init: true
+    restart: unless-stopped
+
+  envoy:
+    image: envoyproxy/envoy:v1.32.3
+    command:
+      - -c
+      - /etc/envoy/envoy.yaml
+      - --log-level
+      - info
+    volumes:
+      - ./config/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8080:8080"
+      - "9901:9901"
+    depends_on:
+      - xds
+      - backend
+    init: true
+    restart: unless-stopped

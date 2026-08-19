@@ -1,0 +1,7 @@
+version: 1
+remove_authorization_header: true
+
+tenants:
+  mytest--dev: 123456-3290902-2-2323
+  mytest--prod: 3209320432-43-324-342
+  spine-prod: 239043-3-423-34-423

@@ -1,0 +1,29 @@
+-- Rendered by the xDS control plane. Do not edit the published copy.
+local tokens = {
+{{- range .Tokens }}
+  [{{ printf "%q" .Token }}] = {{ printf "%q" .Tenant }},
+{{- end }}
+}
+
+function envoy_on_request(handle)
+  -- Header-only work keeps cost independent of request body size and preserves streaming.
+  local auth = handle:headers():get("authorization")
+  if auth == nil then
+    handle:respond({[":status"] = "401"}, "missing authorization\n")
+    return
+  end
+  local token = string.match(auth, "^Bearer%s+(.+)$")
+  if token == nil then
+    handle:respond({[":status"] = "401"}, "invalid authorization format\n")
+    return
+  end
+  local tenant = tokens[token]
+  if tenant == nil then
+    handle:respond({[":status"] = "403"}, "unknown token\n")
+    return
+  end
+  handle:headers():replace("x-scope-orgid", tenant)
+{{- if .RemoveAuthorizationHeader }}
+  handle:headers():remove("authorization")
+{{- end }}
+end
